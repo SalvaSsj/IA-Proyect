@@ -14,58 +14,61 @@ except Exception as e:
     print(f">>> Error al conectar Arduino: {e}")
     arduino = None
 
-# Cargar el modelo entrenado (el archivo .pt que generaste)
-# Si aún no lo tienes, puedes usar 'yolov8n-cls.pt' para pruebas iniciales
-
+# Ruta de tu modelo
 model = YOLO('runs/classify/train/weights/best.pt')
 
 # Inicializar cámara
 cap = cv2.VideoCapture(0)
 
-if cap.isOpened():
-    print(">>> Camara en funcionamiento") # Mensaje clave 1
-else:
+# Umbral de confianza (0.7 = 70%)
+# Esto evita que la IA "adivine" cuando no está segura
+UMBRAL_CONFIANZA = 0.7 
+
+if not cap.isOpened():
     print(">>> Error: No se pudo acceder a la cámara")
     exit()
 
-# --- BUCLE PRINCIPAL ---
+print(">>> Sistema de clasificación iniciado. Presiona 'q' para salir.")
+
 try:
     while True:
         ret, frame = cap.read()
         if not ret:
             break
 
-        print(">>> Leyendo imagen") # Mensaje clave 2
-
-        # Predicción con el modelo
-        results = model(frame, verbose=False) # verbose=False para limpiar la terminal
+        # Predicción
+        # results[0].probs contiene las probabilidades de las 5 clases
+        results = model(frame, verbose=False)
         
         if results[0].probs is not None:
-            # Obtener el índice de la clase con mayor confianza
-            class_id = results[0].probs.top1
-            # Obtener el nombre de la clase (Orgánico, Inorgánico, etc.)
-            resultado_texto = results[0].names[class_id]
+            # 1. Obtener la confianza de la mejor predicción
+            confianza = results[0].probs.top1conf.item()
+            
+            # 2. Solo procesar si supera nuestro umbral
+            if confianza >= UMBRAL_CONFIANZA:
+                class_id = results[0].probs.top1
+                nombre_clase = results[0].names[class_id]
+                
+                # Formatear el texto para mostrar
+                texto_display = f"Clase: {nombre_clase.upper()} ({confianza*100:.1f}%)"
+                
+                # Imprimir en consola
+                print(f">>> Detectado: {texto_display}")
+                
+                # 3. Dibujar el resultado en la ventana de video
+                cv2.putText(frame, texto_display, (10, 30), 
+                            cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
+            else:
+                cv2.putText(frame, "Buscando objetos...", (10, 30), 
+                            cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 2)
 
-            print(f">>> El resultado es: {resultado_texto}") # Mensaje clave 3
+        # Mostrar la imagen
+        cv2.imshow("Clasificador de Residuos", frame)
 
-            # --- LÓGICA DE CONTROL MECÁNICO ---
-            if arduino:
-                if resultado_texto == "organico":
-                    arduino.write(b'O') # Envía señal para abrir
-                else:
-                    arduino.write(b'I') # Envía señal para cerrar/mantener
-
-        # (Opcional) Mostrar la imagen para referencia visual
-        cv2.imshow("Preview - Presiona 'q' para salir", frame)
-
-        # Pequeña pausa para no saturar la terminal y el procesador
-        if cv2.waitKey(500) & 0xFF == ord('q'):
+        if cv2.waitKey(1) & 0xFF == ord('q'):
             break
 
 finally:
-    # Limpieza de recursos
     cap.release()
     cv2.destroyAllWindows()
-    if arduino:
-        arduino.close()
     print(">>> Programa finalizado.")
