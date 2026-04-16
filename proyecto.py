@@ -4,9 +4,9 @@ import time
 from ultralytics import YOLO
 
 # --- CONFIGURACIÓN INICIAL ---
-# Intento de conexión con Arduino
+# Conexion al Arduino
 try:
-    # Asegúrate de que el puerto COM coincida con el de tu Arduino IDE
+    # Debe ser el puerto COM coincida con el de tu Arduino IDE
     arduino = serial.Serial('COM3', 9600, timeout=1)
     time.sleep(2) 
     print(">>> Conexión con Arduino establecida.")
@@ -14,14 +14,13 @@ except Exception as e:
     print(f">>> Error al conectar Arduino: {e}")
     arduino = None
 
-# Ruta de tu modelo
+# Ruta del modelo
 model = YOLO('runs/classify/train/weights/best.pt')
 
 # Inicializar cámara
 cap = cv2.VideoCapture(0)
 
 # Umbral de confianza (0.7 = 70%)
-# Esto evita que la IA "adivine" cuando no está segura
 UMBRAL_CONFIANZA = 0.7 
 
 if not cap.isOpened():
