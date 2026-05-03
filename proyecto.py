@@ -17,28 +17,28 @@ model = YOLO('runs/classify/train/weights/best.pt')
 
 #---Conexion_camara---
 print(">>> Iniciamos conexion a camara indice 0.");
-id_camara = 0
+id_camara = 1
 
 cap = cv2.VideoCapture(id_camara)
 
 if not cap.isOpened():
-    print(">>> Error: No se puede abrir la camara indice 0.");
-    print("Iniciamos conexion a camara indice 1.");
-    id_camara = 1
+    print(">>> Error: No se puede abrir la camara indice 1.");
+    print("Iniciamos conexion a camara indice 0.");
+    id_camara = 0
     cap = cv2.VideoCapture(id_camara)
     if not cap.isOpened():
-        print(">>> Error: No se puede abrir la camara indice 1.");
+        print(">>> Error: No se puede abrir la camara indice 0.");
         exit();
     else:
-        print("Conexion establecida con camara indice 1.");
+        print("Conexion establecida con camara indice 0.");
 else:
-    print("Conexion establecida con camara indice 0.");
+    print("Conexion establecida con camara indice 1.");
 
 
 #---Ventanas---
-UMBRAL_CONFIANZA = 0.995
+UMBRAL_CONFIANZA = 0.70
 
-cv2.namedWindow("1. Vision de Camara", cv2.WINDOW_NORMAL)
+cv2.namedWindow("1. Vision de Camara", cv2.WINDOW_NORMAL) 
 cv2.namedWindow("2. Informacion de Clasificacion", cv2.WINDOW_NORMAL)
 cv2.resizeWindow("2. Informacion de Clasificacion", 400, 300)
 
